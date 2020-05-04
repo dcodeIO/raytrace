@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="user-scalable=0" />
+<title>Ray tracer - AssemblyScript</title>
+<link rel="icon" href="https://assemblyscript.org/favicon.ico" type="image/x-icon"/>
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; color: #111; background: #fff; font-family: sans-serif; }
+  body { border-top: 2px solid #ed4854; }
+  h1 { padding: 20px; font-size: 12pt; margin: 0; }
+  a { color: #111; text-decoration: none; }
+  a:hover { color: #0074C1; text-decoration: underline; }
+  canvas { position: absolute; top: 60px; left: 20px; width: calc(100% - 40px); height: calc(100% - 80px); background: #ddd; }
+</style>
+</head>
+<body>
+<h1>
+  <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing/">Ray tracer</a> in <a href="http://assemblyscript.org">AssemblyScript</a> ( <a href="https://github.com/AssemblyScript/examples/blob/master/raytrace/assembly/index.ts">source</a> )
+</h1>
+<script>var exports = {};</script>
+<script src="node_modules/@assemblyscript/loader/index.js"></script>
+<canvas id="canvas"></canvas>
+<script>
+exports.instantiateStreaming(fetch("build/optimized.wasm"), {}).then(exports => {
+  const canvas = document.getElementById("canvas");
+  const width = canvas.width = canvas.offsetWidth;
+  const height = canvas.height = canvas.offsetHeight;
+  const context = canvas.getContext("2d");
+  const image = context.createImageData(width, height);
+
+  const { Sphere, Vec3, ArrayOfSpheres_ID, __allocArray, __retain } = exports;
+  const spheres = __retain(__allocArray(ArrayOfSpheres_ID, [
+    new Sphere(new Vec3( 0.0, -10004, -20), 10000, new Vec3(0.20, 0.20, 0.20), 0, 0.0, new Vec3(0.0, 0.0, 0.0)), // plane
+    new Sphere(new Vec3( 0.0,      0, -20),     4, new Vec3(1.00, 0.32, 0.36), 1, 0.5, new Vec3(0.0, 0.0, 0.0)), // red
+    new Sphere(new Vec3( 5.0,     -1, -15),     2, new Vec3(0.90, 0.76, 0.46), 1, 0.0, new Vec3(0.0, 0.0, 0.0)), // yellow
+    new Sphere(new Vec3( 5.0,      0, -25),     3, new Vec3(0.65, 0.77, 0.97), 1, 0.0, new Vec3(0.0, 0.0, 0.0)), // blue
+    new Sphere(new Vec3(-5.5,      0, -15),     3, new Vec3(0.90, 0.90, 0.90), 1, 0.0, new Vec3(0.0, 0.0, 0.0)), // black
+    new Sphere(new Vec3( 0.0,     20, -30),     3, new Vec3(0.00, 0.00, 0.00), 0, 0.0, new Vec3(3.0, 3.0, 3.0))  // light
+  ]));
+
+  console.log(width, height);
+  const offset = exports.resize(width, height);
+
+  function step(x = 0) {
+    exports.render(x, spheres);
+    new Uint32Array(image.data.buffer).set(new Uint32Array(exports.memory.buffer, offset, width * height));
+    context.putImageData(image, 0, 0);
+    if (++x == width) return;
+    requestAnimationFrame(() => step(x));
+  }
+  step();
+});
+</script>
+</body>
+</html>
